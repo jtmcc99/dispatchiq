@@ -5,6 +5,7 @@ import type { Stats, AgentStatus } from '../types'
 interface Props {
   stats: Stats | null
   agentStatus: AgentStatus
+  agentRunError: string | null
   agentRunning: boolean
   onRunAgent: () => void
   lastRefresh: Date
@@ -17,6 +18,7 @@ interface Props {
 export function TopBar({
   stats,
   agentStatus,
+  agentRunError,
   agentRunning,
   onRunAgent,
   tab,
@@ -99,30 +101,37 @@ export function TopBar({
       </nav>
 
       {/* Agent status */}
-      <div className="flex items-center gap-2">
-        <div
-          className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-md font-medium ${
-            agentRunning
-              ? 'bg-blue-50 text-blue-700'
-              : agentErr
-              ? 'bg-red-50 text-red-700'
-              : agentOk
-              ? 'bg-green-50 text-green-700'
-              : 'bg-slate-100 text-slate-500'
-          }`}
-        >
-          <Bot size={13} />
-          {agentRunning ? 'Agent running…' : agentOk ? 'Agent ready' : agentErr ? 'Agent error' : 'Agent idle'}
-        </div>
+      <div className="flex flex-col items-end gap-1 max-w-md">
+        <div className="flex items-center gap-2">
+          <div
+            className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-md font-medium ${
+              agentRunning
+                ? 'bg-blue-50 text-blue-700'
+                : agentErr
+                ? 'bg-red-50 text-red-700'
+                : agentOk
+                ? 'bg-green-50 text-green-700'
+                : 'bg-slate-100 text-slate-500'
+            }`}
+          >
+            <Bot size={13} />
+            {agentRunning ? 'Agent running…' : agentOk ? 'Agent ready' : agentErr ? 'Agent error' : 'Agent idle'}
+          </div>
 
-        <button
-          onClick={onRunAgent}
-          disabled={agentRunning}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium rounded-md transition-colors"
-        >
-          {agentRunning ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-          {agentRunning ? 'Running…' : 'Run Agent'}
-        </button>
+          <button
+            onClick={onRunAgent}
+            disabled={agentRunning}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium rounded-md transition-colors"
+          >
+            {agentRunning ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+            {agentRunning ? 'Running…' : 'Run Agent'}
+          </button>
+        </div>
+        {agentRunError && (
+          <p className="text-xs text-red-600 text-right leading-snug" title={agentRunError}>
+            {agentRunError}
+          </p>
+        )}
       </div>
     </header>
   )

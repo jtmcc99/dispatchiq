@@ -10,8 +10,14 @@ import { ShiftSummary } from './components/ShiftSummary'
 
 type Tab = 'dashboard' | 'cs-queue' | 'shift-summary'
 
+function tabFromSearch(): Tab {
+  const q = new URLSearchParams(window.location.search).get('tab')
+  if (q === 'cs-queue' || q === 'shift-summary' || q === 'dashboard') return q
+  return 'dashboard'
+}
+
 export default function App() {
-  const [tab, setTab] = useState<Tab>('dashboard')
+  const [tab, setTab] = useState<Tab>(tabFromSearch)
   const [selectedWindow, setSelectedWindow] = useState<string | null>(null)
 
   const [orders, setOrders] = useState<Order[]>([])
@@ -20,6 +26,7 @@ export default function App() {
   const [notifications, setNotifications] = useState<CSNotification[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
   const [agentStatus, setAgentStatus] = useState<AgentStatus>({})
+  const [agentRunError, setAgentRunError] = useState<string | null>(null)
   const [agentRunning, setAgentRunning] = useState(false)
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
 
@@ -51,7 +58,14 @@ export default function App() {
     return () => clearInterval(interval)
   }, [fetchAll])
 
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    url.searchParams.set('tab', tab)
+    window.history.replaceState({}, '', url)
+  }, [tab])
+
   const runAgent = async () => {
+    setAgentRunError(null)
     setAgentRunning(true)
     try {
       const result = await api.agent.run()
@@ -59,6 +73,14 @@ export default function App() {
       await fetchAll()
     } catch (err) {
       console.error('Agent error', err)
+      const raw = err instanceof Error ? err.message : String(err)
+      if (raw.startsWith('502') || raw.includes('Failed to fetch')) {
+        setAgentRunError(
+          'API unreachable. In another terminal: cd backend && source ../venv/bin/activate && uvicorn main:app --reload --port 8000',
+        )
+      } else {
+        setAgentRunError(raw.replace(/^\d+\s*:\s*/, '').slice(0, 200) || 'Run Agent failed')
+      }
     } finally {
       setAgentRunning(false)
     }
@@ -87,6 +109,7 @@ export default function App() {
       <TopBar
         stats={stats}
         agentStatus={agentStatus}
+        agentRunError={agentRunError}
         agentRunning={agentRunning}
         onRunAgent={runAgent}
         lastRefresh={lastRefresh}

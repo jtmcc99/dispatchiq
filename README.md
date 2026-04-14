@@ -47,12 +47,24 @@ This tool was built from firsthand experience managing last-mile delivery operat
 - **Agent Architecture**: Claude tool use for exception detection, CS notification generation, coverage analysis, and shift summaries
 - **Storage**: JSON-based (orders, drivers, exceptions)
 
+## Screenshots
+
+Demo data only — safe to share publicly.
+
+| Operations dashboard | CS notification queue | Shift summary |
+|:---:|:---:|:---:|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![CS queue](docs/screenshots/cs-queue.png) | ![Shift summary](docs/screenshots/shift-summary.png) |
+
+Deep links (for docs or sharing a specific view): `?tab=dashboard`, `?tab=cs-queue`, `?tab=shift-summary`.
+
+To regenerate images locally (Chrome on macOS, with the API and Vite already running): `./scripts/capture-readme-screenshots.sh`
+
 ## Setup
 
 ### Prerequisites
 - Python 3.9+
 - Node.js 18+
-- An Anthropic API key ([get one here](https://console.anthropic.com))
+- **Optional:** An Anthropic API key ([console.anthropic.com](https://console.anthropic.com)) — only needed for **Run Agent** and other Claude-powered features. The dashboard loads with bundled demo data without it.
 
 ### Installation
 
@@ -60,28 +72,42 @@ This tool was built from firsthand experience managing last-mile delivery operat
 git clone https://github.com/jtmcc17-boop/dispatchiq.git
 cd dispatchiq
 
-# Backend
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
-export ANTHROPIC_API_KEY="your-api-key"
+pip install -r backend/requirements.txt
 
-# Frontend
 cd frontend
 npm install
 ```
 
 ### Run
 
-```bash
-# Terminal 1: Backend
-source venv/bin/activate
-uvicorn main:app --reload
+The UI talks to the API through Vite’s dev proxy at **http://localhost:8000**. Start the backend first, then the frontend.
 
-# Terminal 2: Frontend
+```bash
+# Terminal 1 — API
+source venv/bin/activate
+cd backend
+uvicorn main:app --reload --host 127.0.0.1 --port 8000
+
+# Terminal 2 — UI (from repo root)
 cd frontend
 npm run dev
 ```
+
+Open the URL Vite prints (usually **http://localhost:5173**). If that port is busy, Vite picks the next port — use the **Local** URL from the terminal.
+
+**Anthropic key (optional):** To use **Run Agent**, set the key in the same shell before `uvicorn`:
+
+```bash
+export ANTHROPIC_API_KEY="your-key"
+```
+
+Never commit API keys. This repo ignores `.env` files; keep secrets in environment variables or a local `.env` that stays on your machine.
+
+### Security note for public clones
+
+All data in this repo is **synthetic demo content**. Do not add real customer names, addresses, or internal URLs to committed files.
 
 ## Agent Capabilities
 
@@ -120,4 +146,4 @@ Built from firsthand experience managing delivery operations at a startup where 
 
 ## License
 
-MIT
+See [LICENSE](LICENSE) (MIT).
