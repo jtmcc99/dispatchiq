@@ -43,7 +43,7 @@ This tool was built from firsthand experience managing last-mile delivery operat
 ## Tech Stack
 
 - **Backend**: FastAPI (Python) with Anthropic Claude API for agent intelligence
-- **Frontend**: React with Vite
+- **Frontend**: React (TypeScript) with Vite
 - **Agent Architecture**: Claude tool use for exception detection, CS notification generation, coverage analysis, and shift summaries
 - **Storage**: JSON-based (orders, drivers, exceptions)
 
@@ -69,7 +69,7 @@ To regenerate images locally (Chrome on macOS, with the API and Vite already run
 ### Installation
 
 ```bash
-git clone https://github.com/jtmcc17-boop/dispatchiq.git
+git clone https://github.com/jtmcc99/dispatchiq.git
 cd dispatchiq
 
 python3 -m venv venv
@@ -117,6 +117,7 @@ All data in this repo is **synthetic demo content**. Do not add real customer na
 | Coverage gap detection | Identifies zones without enough drivers | Driver type + zone assignment + call-outs |
 | Missing item escalation | Blocks dispatch of orders missing core items | Item criticality assessment |
 | CS notification | Generates customer communication scripts | Exception type + severity + order details |
+| Smart driver reservation | Warns before assigning a driver to an order a biker could handle | Order size/weight + remaining driver pool + upcoming order queue |
 | Shift summary | Creates end-of-shift briefing | Aggregates all metrics + open exceptions |
 
 ## Changelog
