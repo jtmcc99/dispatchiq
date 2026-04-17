@@ -11,7 +11,7 @@ import type {
 const configuredApiUrl = import.meta.env.VITE_API_URL?.trim()
 const BASE = (configuredApiUrl && configuredApiUrl.length > 0
   ? configuredApiUrl
-  : 'http://localhost:8000'
+  : '/api'
 ).replace(/\/+$/, '')
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {

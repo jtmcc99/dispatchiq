@@ -1,5 +1,7 @@
 # DispatchIQ: Agentic Operations Assistant for Last-Mile Delivery
 
+**[Live Demo](https://dispatchiq-one.vercel.app)**
+
 ## The Problem
 
 In last-mile delivery operations, the ops manager can be the single point of failure. Every exception- late orders, missing items, driver call-outs, coverage gaps- runs through one person's brain. When things get busy, manual processes get dropped. The customer service team only finds out about a problem if the ops manager physically walks over and tells them. Critical items ship without customers being notified they're missing. Incoming shift managers inherit chaos with no structured briefing.

@@ -2,13 +2,30 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 from pathlib import Path
 from datetime import datetime
 from typing import Optional
 from models import Order, Driver, Exception_, CSNotification
 
-DATA_DIR = Path(__file__).parent / "data"
-DATA_DIR.mkdir(exist_ok=True)
+_SEED_DIR = Path(__file__).parent / "data"
+
+# On Vercel (and other read-only filesystems) the bundled seed data is not
+# writable. Mirror it into /tmp on first use so the demo can mutate state
+# within a single serverless container lifetime.
+if os.getenv("VERCEL") or os.getenv("DISPATCHIQ_WRITABLE_DATA_DIR"):
+    DATA_DIR = Path(
+        os.getenv("DISPATCHIQ_WRITABLE_DATA_DIR", "/tmp/dispatchiq_data")
+    )
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    if _SEED_DIR.exists():
+        for _seed_file in _SEED_DIR.glob("*.json"):
+            _dest = DATA_DIR / _seed_file.name
+            if not _dest.exists():
+                shutil.copy2(_seed_file, _dest)
+else:
+    DATA_DIR = _SEED_DIR
+    DATA_DIR.mkdir(exist_ok=True)
 
 ORDERS_FILE = DATA_DIR / "orders.json"
 DRIVERS_FILE = DATA_DIR / "drivers.json"
