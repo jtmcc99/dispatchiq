@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -32,9 +33,15 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="DispatchIQ API", lifespan=lifespan)
 
+cors_origins = os.getenv("DISPATCHIQ_CORS_ORIGINS")
+allow_origins = [o.strip() for o in cors_origins.split(",")] if cors_origins else [
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -220,14 +220,14 @@ function OrderRow({ order, onUpdateStatus }: { order: Order; onUpdateStatus: (id
               CORE MISSING
             </span>
           )}
-        </div>
 
-        {/* Pick progress (only during picking) */}
-        {showPickProgress && (
-          <div className="w-28 flex-shrink-0">
-            <PickProgress picked={order.items_picked} total={order.total_items} />
-          </div>
-        )}
+          {/* Pick progress (only during picking) */}
+          {showPickProgress && (
+            <div className="basis-full max-w-[220px] pt-0.5">
+              <PickProgress picked={order.items_picked} total={order.total_items} />
+            </div>
+          )}
+        </div>
 
         {/* Items summary */}
         <div className="w-36 flex-shrink-0 text-xs text-slate-400 truncate hidden xl:block">
