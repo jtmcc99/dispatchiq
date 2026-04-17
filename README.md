@@ -82,7 +82,7 @@ npm install
 
 ### Run
 
-The UI talks to the API through Vite’s dev proxy at **http://localhost:8000**. Start the backend first, then the frontend.
+The frontend reads its API base URL from `VITE_API_URL` and falls back to `http://localhost:8000` in development, so running both servers locally just works with no extra config. Start the backend first, then the frontend.
 
 ```bash
 # Terminal 1 — API
@@ -105,9 +105,46 @@ export ANTHROPIC_API_KEY="your-key"
 
 Never commit API keys. This repo ignores `.env` files; keep secrets in environment variables or a local `.env` that stays on your machine.
 
+### Environment variables
+
+| Variable | Where | Purpose |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | Backend | Required for agent features (**Run Agent**, shift summary). Not needed to browse the dashboard with demo data. |
+| `DISPATCHIQ_CORS_ORIGINS` | Backend | Comma-separated list of allowed browser origins. Defaults to `http://localhost:5173, http://localhost:3000` when unset. Set to your Vercel URL in production. |
+| `VITE_API_URL` | Frontend (build-time) | Base URL of the backend, e.g. `https://your-service.onrender.com`. Falls back to `http://localhost:8000` if unset. See `frontend/.env.example`. |
+
 ### Security note for public clones
 
 All data in this repo is **synthetic demo content**. Do not add real customer names, addresses, or internal URLs to committed files.
+
+## Deployment
+
+This repo includes configuration for a Render (backend) + Vercel (frontend) deployment:
+
+- `Procfile` — start command for Render/Heroku-style hosting.
+- `render.yaml` — Render Blueprint defining the Python web service, build command, and env var placeholders.
+- `frontend/.env.example` — template for the frontend `VITE_API_URL`.
+
+### Backend on Render
+
+1. Render dashboard → **New** → **Blueprint**, select this repo.
+2. Render detects `render.yaml` and proposes the `dispatchiq-backend` web service (Python, free plan).
+3. Set environment variables on the service:
+   - `ANTHROPIC_API_KEY` — your Anthropic key (kept secret; marked `sync: false`).
+   - `DISPATCHIQ_CORS_ORIGINS` — your Vercel URL (can be updated after the frontend is deployed).
+4. Deploy and note the service URL, e.g. `https://dispatchiq-backend.onrender.com`.
+
+### Frontend on Vercel
+
+1. Vercel dashboard → **New Project**, import the same repo.
+2. Set **Root Directory** to `frontend` (framework preset auto-detects **Vite**).
+3. Add environment variable:
+   - `VITE_API_URL` = your Render backend URL.
+4. Deploy and note the Vercel URL, e.g. `https://dispatchiq.vercel.app`.
+
+### Finalize CORS
+
+Back in Render, update `DISPATCHIQ_CORS_ORIGINS` to the live Vercel URL (comma-separate multiple origins if needed) and redeploy.
 
 ## Agent Capabilities
 
@@ -121,6 +158,13 @@ All data in this repo is **synthetic demo content**. Do not add real customer na
 | Shift summary | Creates end-of-shift briefing | Aggregates all metrics + open exceptions |
 
 ## Changelog
+
+### Deployment & polish (April 2026)
+- **Render + Vercel deployment config**: Added `Procfile`, `render.yaml`, and `frontend/.env.example` so the app can deploy to Render (backend) and Vercel (frontend) with minimal setup.
+- **Env-driven API URL**: Frontend reads `VITE_API_URL` (build-time) with a local fallback to `http://localhost:8000`.
+- **Env-driven CORS**: Backend honors `DISPATCHIQ_CORS_ORIGINS` (comma-separated) for production origins; localhost stays allowed by default.
+- **Dashboard layout fix**: Picking progress indicator now sits on its own line in the order row, so it no longer overlaps the `Picking` status badge on narrow viewports.
+- **Public-repo hardening**: Added MIT `LICENSE`, screenshots under `docs/screenshots/`, screenshot capture script, and URL deep links (`?tab=dashboard`, `?tab=cs-queue`, `?tab=shift-summary`).
 
 ### v2 — Product Iteration (April 2026)
 Changes based on hands-on testing and operational experience:
