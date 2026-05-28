@@ -49,7 +49,7 @@ DispatchIQ exposes one because the same operational reasoning that powers the in
 |------|--------------|
 | `flag_missing_item(order_id, item_name)` | Returns a structured `MissingItemAssessment` telling the caller whether a missing item is a core item (immediate CS notification, block dispatch) or minor (batched at pick completion). |
 
-*Remaining tools (`check_window_risk`, `check_driver_coverage`, `check_driver_reservation`, `create_exception`, `generate_cs_notification`, `generate_shift_summary`) follow the same pattern and are next on the porting roadmap — see [issue #N](link-to-tracker).*
+*Remaining tools (`check_window_risk`, `check_driver_coverage`, `check_driver_reservation`, `create_exception`, `generate_cs_notification`, `generate_shift_summary`) follow the same pattern and are next on the porting roadmap — see [issue #N](https://github.com/jtmcc99/dispatchiq/issues/1.*
 
 ### Resources
 
