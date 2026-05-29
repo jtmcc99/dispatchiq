@@ -10,56 +10,17 @@ and generate CS notifications. It runs in a background loop.
 import json
 import uuid
 import asyncio
-from datetime import datetime, time
+from datetime import datetime
 from typing import Any
 
 import anthropic
 
 import data_store
 from models import Exception_, CSNotification, Order
+from risk import _parse_window, compute_risk_level  # re-export for callers
 
 client = anthropic.Anthropic()
 MODEL = "claude-sonnet-4-20250514"
-
-# ─── Risk calculation helpers ─────────────────────────────────────────────────
-
-def _parse_window(window: str) -> tuple[time, time]:
-    start_str, end_str = window.split("-")
-    start_h, start_m = map(int, start_str.split(":"))
-    end_h, end_m = map(int, end_str.split(":"))
-    return time(start_h, start_m), time(end_h, end_m)
-
-
-def compute_risk_level(order: Order, now: datetime) -> str:
-    if order.status in ("delivered", "failed"):
-        return "green"
-    if order.status == "dispatched":
-        return "green"
-
-    try:
-        start_t, end_t = _parse_window(order.delivery_window)
-    except Exception:
-        return "green"
-
-    start = datetime.combine(now.date(), start_t)
-    end = datetime.combine(now.date(), end_t)
-
-    minutes_into_window = (now - start).total_seconds() / 60
-    minutes_to_end = (end - now).total_seconds() / 60
-
-    if now < start:
-        return "green"
-
-    if now >= end and order.status not in ("dispatched", "delivered"):
-        return "red"
-    if minutes_into_window > 30 and order.status in ("received", "picking"):
-        return "red"
-    if minutes_into_window > 15 and order.status in ("received", "picking"):
-        return "yellow"
-    if minutes_to_end < 20 and order.status in ("received", "picking", "picked"):
-        return "yellow"
-
-    return "green"
 
 
 # ─── Tool implementations ─────────────────────────────────────────────────────

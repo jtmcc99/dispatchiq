@@ -17,3 +17,9 @@ frontend/.env
 .DS_Store
 *.swp
 .vercel
+
+# Editor / MCP client configs with machine-local paths
+.cursor/
+
+# Local data backups (rollback artifacts, not source of truth)
+*.backup.json

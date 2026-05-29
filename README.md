@@ -47,6 +47,7 @@ This tool was built from firsthand experience managing last-mile delivery operat
 - **Backend**: FastAPI (Python) with Anthropic Claude API for agent intelligence
 - **Frontend**: React (TypeScript) with Vite
 - **Agent Architecture**: Claude tool use for exception detection, CS notification generation, coverage analysis, and shift summaries
+- **MCP Server**: Standalone FastMCP server (`mcp_server/`) exposing the same toolkit to any MCP-compatible client via a shared `risk.py` module
 - **Storage**: JSON-based (orders, drivers, exceptions)
 
 ## Screenshots
@@ -158,6 +159,28 @@ Back in Render, update `DISPATCHIQ_CORS_ORIGINS` to the live Vercel URL (comma-s
 | CS notification | Generates customer communication scripts | Exception type + severity + order details |
 | Smart driver reservation | Warns before assigning a driver to an order a biker could handle | Order size/weight + remaining driver pool + upcoming order queue |
 | Shift summary | Creates end-of-shift briefing | Aggregates all metrics + open exceptions |
+
+## MCP Server
+
+DispatchIQ also ships a standalone [Model Context Protocol](https://modelcontextprotocol.io) server in [`mcp_server/`](mcp_server/) that exposes the full operations toolkit to any MCP-compatible client — Claude Code, Cursor, Claude Desktop, or a custom agent. Tool calls hit the same JSON-backed data store the live demo uses. See [`mcp_server/README.md`](mcp_server/README.md) for setup.
+
+### Tools
+
+| Name | Purpose |
+|------|---------|
+| `flag_missing_item` | Decide if a missing item is a core item (immediate CS notification) or minor (batched at pick completion). |
+| `check_window_risk` | Assess late-risk for one or all active delivery windows; returns a risk level and a recommendation. |
+| `check_driver_coverage` | Identify which zones are covered, at risk, or uncovered — broken out by biker vs. driver. |
+| `check_driver_reservation` | Decide whether assigning a specific driver to a specific order is approve / warn / block, given remaining car-driver capacity. |
+| `create_exception` | Record a tracked operational exception. Dedupes by order + spec-level type so distinct issue categories don't collapse. |
+| `generate_cs_notification` | Generate a draft customer-facing script and persist a CS notification (immediate or batched per DispatchIQ policy). |
+| `generate_shift_summary` | Structured end-of-shift briefing: window progress, open exceptions, unresolved CS items, and top priorities for the next shift. |
+
+All tools return Pydantic-typed responses and use a structured `NotFound` result (`kind="not_found"`) for unknown order, driver, zone, or shift ids rather than raising.
+
+### What this demonstrates
+
+The MCP server reuses DispatchIQ's existing risk-assessment logic via a shared `risk.py` module — same business rules drive the in-app agent and the MCP surface, so the two interfaces can never disagree on what counts as a critical window or an at-risk zone.
 
 ## Changelog
 

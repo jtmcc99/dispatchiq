@@ -78,6 +78,14 @@ export default function App() {
         setAgentRunError(
           'API unreachable. In another terminal: cd backend && source ../venv/bin/activate && uvicorn main:app --reload --port 8000',
         )
+      } else if (
+        raw.includes('ANTHROPIC_API_KEY') ||
+        raw.includes('authentication method') ||
+        raw.includes('Run Agent unavailable')
+      ) {
+        setAgentRunError(
+          'Run Agent is disabled on this deployment because the backend Anthropic API key is not configured.',
+        )
       } else {
         setAgentRunError(raw.replace(/^\d+\s*:\s*/, '').slice(0, 200) || 'Run Agent failed')
       }
