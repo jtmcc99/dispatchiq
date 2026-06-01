@@ -248,6 +248,11 @@ def update_cs_notification(notif_id: str, update: CSNotificationUpdate):
 
 @app.post("/agent/run")
 def run_agent():
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        raise HTTPException(
+            503,
+            "Run Agent unavailable: backend ANTHROPIC_API_KEY is not configured.",
+        )
     try:
         return run_agent_cycle()
     except Exception as e:
@@ -261,6 +266,11 @@ def agent_status():
 
 @app.get("/agent/shift-summary")
 async def shift_summary():
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        raise HTTPException(
+            503,
+            "Shift summary unavailable: backend ANTHROPIC_API_KEY is not configured.",
+        )
     try:
         structured = await generate_shift_summary_structured()
         return {

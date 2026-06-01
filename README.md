@@ -1,6 +1,6 @@
 # DispatchIQ: Agentic Operations Assistant for Last-Mile Delivery
 
-**[Live Demo](your-vercel-url-here)**
+**[Live Demo](https://dispatchiq-one.vercel.app)**
 
 ## The Problem
 
@@ -35,98 +35,21 @@ This tool was built from firsthand experience managing last-mile delivery operat
 - **The "coverage gap problem":** You have 7 bikers but 0 drivers for downtown. Downtown orders are too far for bikers. You don't realize the gap until orders start going late. DispatchIQ flags coverage gaps the moment a driver calls out.
 - **The handoff problem:** The incoming manager gets a verbal briefing and a Slack scroll. Critical context gets lost. DispatchIQ generates a structured shift summary so nothing falls through the cracks.
 
-## MCP Server
-
-DispatchIQ ships with a [Model Context Protocol](https://modelcontextprotocol.io) server alongside the FastAPI backend. **MCP is the emerging standard for letting AI assistants safely call into your application's tools and data** — think of it as the USB-C port for LLMs. Instead of every product re-implementing tool use against every model vendor's proprietary API, you write one MCP server and *any* compliant client (Claude Desktop, Claude Code, Cursor, custom agents) can drive it.
-
-DispatchIQ exposes one because the same operational reasoning that powers the in-app agent — flagging missing items, checking driver coverage, generating shift summaries — is more valuable when an ops manager can invoke it from wherever they already work (their IDE, their assistant, a custom workflow) rather than only inside this app.
-
-> 🎥 **[Watch the 60-second demo →](ADD_LOOM_LINK_HERE)**
-
-### Tools
-
-| Name | What it does |
-|------|--------------|
-| `flag_missing_item(order_id, item_name)` | Returns a structured `MissingItemAssessment` telling the caller whether a missing item is a core item (immediate CS notification, block dispatch) or minor (batched at pick completion). |
-
-*Remaining tools (`check_window_risk`, `check_driver_coverage`, `check_driver_reservation`, `create_exception`, `generate_cs_notification`, `generate_shift_summary`) follow the same pattern and are next on the porting roadmap — see [issue #N](https://github.com/jtmcc99/dispatchiq/issues/1.*
-
-### Resources
-
-*None exposed yet.* Planned: `dispatchiq://orders`, `dispatchiq://orders/{id}`, `dispatchiq://drivers`, `dispatchiq://drivers/{id}` — the four read-only datasets the agent re-reads on every cycle, which belong as resources rather than tools.
-
-### Quick start
-
-**Prereqs:** [uv](https://docs.astral.sh/uv/) and an MCP-compatible client (Claude Desktop, Claude Code, or the MCP Inspector for ad-hoc testing).
-
-```bash
-cd mcp_server
-uv sync
-```
-
-Run with the MCP Inspector (interactive testing in your browser):
-```bash
-uv run mcp dev server.py
-```
-
-Or run the bare stdio server (for a client to attach to):
-```bash
-uv run server.py
-```
-
-**Claude Desktop config** (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
-
-```json
-{
-  "mcpServers": {
-    "dispatchiq": {
-      "command": "uv",
-      "args": [
-        "--directory",
-        "/ABSOLUTE/PATH/TO/dispatchiq/mcp_server",
-        "run",
-        "server.py"
-      ]
-    }
-  }
-}
-```
-
-Once configured, ask Claude something like *"There's an order ORD-CORE01 missing Pork Tenderloin — flag it"* and it will call the tool directly.
-
-### What this demonstrates
-
-- **Tool schemas derived from Python type hints, not hand-written JSON.** Strong types on every parameter and a Pydantic model for the return value mean FastMCP generates a precise, validated schema automatically — Claude sees a typed contract, not a free-form blob. Renaming a field in code updates the schema the model sees in the same commit.
-- **Structured returns over plain errors and stringly-typed dicts.** Every tool returns a Pydantic model with documented fields; failures raise typed exceptions that surface to the client as real tool errors. The model can reason over the response shape instead of pattern-matching on prose.
-- **Right primitive for the job: resource vs. tool.** Read-only datasets the agent re-fetches every cycle (orders, drivers) belong as MCP resources, not tools — they're addressable, cacheable, and don't burn a tool call. Mutations and decisions (flag, create exception, notify CS) stay as tools. Drawing that line up front is the design judgment MCP rewards.
-- **Stdio transport with zero hosting overhead.** The server is a single Python file run by `uv` as a subprocess of the client — no HTTP, no auth layer, no deploy target. The in-product backend stays on FastAPI; the MCP surface is a thin, separately-versioned process that reuses the same data layer.
-
 ## Tech Stack
 
-- **Backend:** FastAPI (Python) with Anthropic Claude API for agent intelligence
-- **Frontend:** React (TypeScript) with Vite
-- **Agent Architecture:** Claude tool use for exception detection, CS notification generation, coverage analysis, and shift summaries
-- **MCP Server:** FastMCP (stdio transport), exposing the same tools to any MCP-compatible client
-- **Storage:** JSON-based (orders, drivers, exceptions)
-
-## Agent Capabilities
-
-| Capability | What it does | How it decides |
-|------------|--------------|----------------|
-| Late risk detection | Flags orders at risk of missing their delivery window | Orders remaining × time left × available drivers |
-| Coverage gap detection | Identifies zones without enough drivers | Driver type + zone assignment + call-outs |
-| Missing item escalation | Blocks dispatch of orders missing core items | Item criticality assessment |
-| CS notification | Generates customer communication scripts | Exception type + severity + order details |
-| Smart driver reservation | Warns before assigning a driver to an order a biker could handle | Order size/weight + remaining driver pool + upcoming order queue |
-| Shift summary | Creates end-of-shift briefing | Aggregates all metrics + open exceptions |
+- **Backend**: FastAPI (Python) with Anthropic Claude API for agent intelligence
+- **Frontend**: React (TypeScript) with Vite
+- **Agent Architecture**: Claude tool use for exception detection, CS notification generation, coverage analysis, and shift summaries
+- **MCP Server**: Standalone FastMCP server (`mcp_server/`) exposing the same toolkit to any MCP-compatible client via a shared `risk.py` module
+- **Storage**: JSON-based (orders, drivers, exceptions)
 
 ## Screenshots
 
 Demo data only — safe to share publicly.
 
 | Operations dashboard | CS notification queue | Shift summary |
-|----------------------|-----------------------|---------------|
-| Dashboard | CS queue | Shift summary |
+|:---:|:---:|:---:|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![CS queue](docs/screenshots/cs-queue.png) | ![Shift summary](docs/screenshots/shift-summary.png) |
 
 Deep links (for docs or sharing a specific view): `?tab=dashboard`, `?tab=cs-queue`, `?tab=shift-summary`.
 
@@ -218,6 +141,39 @@ This repo includes configuration for a Render (backend) + Vercel (frontend) depl
 ### Finalize CORS
 
 Back in Render, update `DISPATCHIQ_CORS_ORIGINS` to the live Vercel URL (comma-separate multiple origins if needed) and redeploy.
+
+## Agent Capabilities
+
+| Capability | What it does | How it decides |
+|-----------|-------------|---------------|
+| Late risk detection | Flags orders at risk of missing their delivery window | Orders remaining × time left × available drivers |
+| Coverage gap detection | Identifies zones without enough drivers | Driver type + zone assignment + call-outs |
+| Missing item escalation | Blocks dispatch of orders missing core items | Item criticality assessment |
+| CS notification | Generates customer communication scripts | Exception type + severity + order details |
+| Smart driver reservation | Warns before assigning a driver to an order a biker could handle | Order size/weight + remaining driver pool + upcoming order queue |
+| Shift summary | Creates end-of-shift briefing | Aggregates all metrics + open exceptions |
+
+## MCP Server
+
+DispatchIQ also ships a standalone [Model Context Protocol](https://modelcontextprotocol.io) server in [`mcp_server/`](mcp_server/) that exposes the full operations toolkit to any MCP-compatible client — Claude Code, Cursor, Claude Desktop, or a custom agent. Tool calls hit the same JSON-backed data store the live demo uses. See [`mcp_server/README.md`](mcp_server/README.md) for setup.
+
+### Tools
+
+| Name | Purpose |
+|------|---------|
+| `flag_missing_item` | Decide if a missing item is a core item (immediate CS notification) or minor (batched at pick completion). |
+| `check_window_risk` | Assess late-risk for one or all active delivery windows; returns a risk level and a recommendation. |
+| `check_driver_coverage` | Identify which zones are covered, at risk, or uncovered — broken out by biker vs. driver. |
+| `check_driver_reservation` | Decide whether assigning a specific driver to a specific order is approve / warn / block, given remaining car-driver capacity. |
+| `create_exception` | Record a tracked operational exception. Dedupes by order + spec-level type so distinct issue categories don't collapse. |
+| `generate_cs_notification` | Generate a draft customer-facing script and persist a CS notification (immediate or batched per DispatchIQ policy). |
+| `generate_shift_summary` | Structured end-of-shift briefing: window progress, open exceptions, unresolved CS items, and top priorities for the next shift. |
+
+All tools return Pydantic-typed responses and use a structured `NotFound` result (`kind="not_found"`) for unknown order, driver, zone, or shift ids rather than raising.
+
+### What this demonstrates
+
+The MCP server reuses DispatchIQ's existing risk-assessment logic via a shared `risk.py` module — same business rules drive the in-app agent and the MCP surface, so the two interfaces can never disagree on what counts as a critical window or an at-risk zone.
 
 ## Changelog
 
