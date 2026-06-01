@@ -4,7 +4,7 @@
 
 ## The Problem
 
-In last-mile delivery operations, the ops manager can be the single point of failure. Every exception- late orders, missing items, driver call-outs, coverage gaps- runs through one person's brain. When things get busy, manual processes get dropped. The customer service team only finds out about a problem if the ops manager physically walks over and tells them. Critical items ship without customers being notified they're missing. Incoming shift managers inherit chaos with no structured briefing.
+In last-mile delivery operations, the ops manager can be the single point of failure. Every exception — late orders, missing items, driver call-outs, coverage gaps — runs through one person's brain. When things get busy, manual processes get dropped. The customer service team only finds out about a problem if the ops manager physically walks over and tells them. Critical items ship without customers being notified they're missing. Incoming shift managers inherit chaos with no structured briefing.
 
 **DispatchIQ replaces the human bottleneck with an AI agent that monitors, decides, and acts.**
 
@@ -13,34 +13,27 @@ In last-mile delivery operations, the ops manager can be the single point of fai
 DispatchIQ is a full-stack operations dashboard powered by an agentic AI system. The agent continuously monitors order flow and takes action when it detects problems.
 
 ### Real-Time Exception Detection
-
 The agent calculates risk across every delivery window: orders remaining vs. time left vs. available drivers per zone. When the math doesn't work, it flags the problem before it becomes a missed delivery.
 
 ### Coverage Gap Analysis
-
 Drivers are categorized by type (biker vs. driver) and zone (Uptown, Midtown, Chelsea, East Village, Downtown). When a driver calls out sick, the agent immediately identifies which zones are uncovered and which delivery windows are at risk — then recommends reallocation.
 
 ### Missing Item Escalation
-
-When an item is missing during picking, the agent evaluates criticality. If it's a core item (like the main protein in a meal order), the agent blocks dispatch and generates a customer notification with a substitution or refund offer. Minor missing items get logged and communicated post-delivery. **No order ships with a missing core item without the customer knowing.**
+When an item is missing during picking, the agent evaluates criticality. If it's a core item (like the main protein in a meal order), the agent blocks dispatch and generates a customer notification with a substitution or refund offer. Minor missing items get logged and communicated post-delivery. No order ships with a missing core item without the customer knowing.
 
 ### CS Notification Queue
-
 Instead of the ops manager walking across the floor to tell customer service about a problem, the agent auto-generates notifications with order details, what happened, and a suggested customer communication script. CS marks each one as handled.
 
 ### Shift Summary
-
 At any point, the agent generates a structured briefing: orders completed, orders late, delivery window progress, open exceptions, and unresolved CS items. An incoming shift manager reads this in 30 seconds and knows exactly what they're inheriting.
 
 ## Why This Matters
 
 This tool was built from firsthand experience managing last-mile delivery operations. The problems it solves are real:
 
-- **The "chicken breast problem"**: A customer orders four items. The one thing that's missing is the main item. The order ships anyway because nobody had time to flag it. The customer gets a bag of sides with no main course. DispatchIQ catches this before dispatch.
-
-- **The "coverage gap problem"**: You have 7 bikers but 0 drivers for downtown. Downtown orders are too far for bikers. You don't realize the gap until orders start going late. DispatchIQ flags coverage gaps the moment a driver calls out.
-
-- **The handoff problem**: The incoming manager gets a verbal briefing and a Slack scroll. Critical context gets lost. DispatchIQ generates a structured shift summary so nothing falls through the cracks.
+- **The "chicken breast problem":** A customer orders four items. The one thing that's missing is the main item. The order ships anyway because nobody had time to flag it. The customer gets a bag of sides with no main course. DispatchIQ catches this before dispatch.
+- **The "coverage gap problem":** You have 7 bikers but 0 drivers for downtown. Downtown orders are too far for bikers. You don't realize the gap until orders start going late. DispatchIQ flags coverage gaps the moment a driver calls out.
+- **The handoff problem:** The incoming manager gets a verbal briefing and a Slack scroll. Critical context gets lost. DispatchIQ generates a structured shift summary so nothing falls through the cracks.
 
 ## Tech Stack
 
@@ -65,9 +58,10 @@ To regenerate images locally (Chrome on macOS, with the API and Vite already run
 ## Setup
 
 ### Prerequisites
+
 - Python 3.9+
 - Node.js 18+
-- **Optional:** An Anthropic API key ([console.anthropic.com](https://console.anthropic.com)) — only needed for **Run Agent** and other Claude-powered features. The dashboard loads with bundled demo data without it.
+- Optional: An [Anthropic API key](https://console.anthropic.com) — only needed for Run Agent and other Claude-powered features. The dashboard loads with bundled demo data without it.
 
 ### Installation
 
@@ -98,9 +92,9 @@ cd frontend
 npm run dev
 ```
 
-Open the URL Vite prints (usually **http://localhost:5173**). If that port is busy, Vite picks the next port — use the **Local** URL from the terminal.
+Open the URL Vite prints (usually `http://localhost:5173`). If that port is busy, Vite picks the next port — use the Local URL from the terminal.
 
-**Anthropic key (optional):** To use **Run Agent**, set the key in the same shell before `uvicorn`:
+**Anthropic key (optional):** To use Run Agent, set the key in the same shell before `uvicorn`:
 
 ```bash
 export ANTHROPIC_API_KEY="your-key"
@@ -111,39 +105,38 @@ Never commit API keys. This repo ignores `.env` files; keep secrets in environme
 ### Environment variables
 
 | Variable | Where | Purpose |
-|---|---|---|
-| `ANTHROPIC_API_KEY` | Backend | Required for agent features (**Run Agent**, shift summary). Not needed to browse the dashboard with demo data. |
+|----------|-------|---------|
+| `ANTHROPIC_API_KEY` | Backend | Required for agent features (Run Agent, shift summary). Not needed to browse the dashboard with demo data. |
 | `DISPATCHIQ_CORS_ORIGINS` | Backend | Comma-separated list of allowed browser origins. Defaults to `http://localhost:5173, http://localhost:3000` when unset. Set to your Vercel URL in production. |
 | `VITE_API_URL` | Frontend (build-time) | Base URL of the backend, e.g. `https://your-service.onrender.com`. Falls back to `http://localhost:8000` if unset. See `frontend/.env.example`. |
 
 ### Security note for public clones
 
-All data in this repo is **synthetic demo content**. Do not add real customer names, addresses, or internal URLs to committed files.
+All data in this repo is synthetic demo content. Do not add real customer names, addresses, or internal URLs to committed files.
 
 ## Deployment
 
 This repo includes configuration for a Render (backend) + Vercel (frontend) deployment:
 
-- `Procfile` — start command for Render/Heroku-style hosting.
-- `render.yaml` — Render Blueprint defining the Python web service, build command, and env var placeholders.
-- `frontend/.env.example` — template for the frontend `VITE_API_URL`.
+- `Procfile` — start command for Render/Heroku-style hosting
+- `render.yaml` — Render Blueprint defining the Python web service, build command, and env var placeholders
+- `frontend/.env.example` — template for the frontend `VITE_API_URL`
 
 ### Backend on Render
 
-1. Render dashboard → **New** → **Blueprint**, select this repo.
-2. Render detects `render.yaml` and proposes the `dispatchiq-backend` web service (Python, free plan).
+1. Render dashboard → New → Blueprint, select this repo
+2. Render detects `render.yaml` and proposes the `dispatchiq-backend` web service (Python, free plan)
 3. Set environment variables on the service:
-   - `ANTHROPIC_API_KEY` — your Anthropic key (kept secret; marked `sync: false`).
-   - `DISPATCHIQ_CORS_ORIGINS` — your Vercel URL (can be updated after the frontend is deployed).
-4. Deploy and note the service URL, e.g. `https://dispatchiq-backend.onrender.com`.
+   - `ANTHROPIC_API_KEY` — your Anthropic key (kept secret; marked `sync: false`)
+   - `DISPATCHIQ_CORS_ORIGINS` — your Vercel URL (can be updated after the frontend is deployed)
+4. Deploy and note the service URL, e.g. `https://dispatchiq-backend.onrender.com`
 
 ### Frontend on Vercel
 
-1. Vercel dashboard → **New Project**, import the same repo.
-2. Set **Root Directory** to `frontend` (framework preset auto-detects **Vite**).
-3. Add environment variable:
-   - `VITE_API_URL` = your Render backend URL.
-4. Deploy and note the Vercel URL, e.g. `https://dispatchiq.vercel.app`.
+1. Vercel dashboard → New Project, import the same repo
+2. Set **Root Directory** to `frontend` (framework preset auto-detects Vite)
+3. Add environment variable: `VITE_API_URL` = your Render backend URL
+4. Deploy and note the Vercel URL, e.g. `https://dispatchiq.vercel.app`
 
 ### Finalize CORS
 
@@ -184,26 +177,31 @@ The MCP server reuses DispatchIQ's existing risk-assessment logic via a shared `
 
 ## Changelog
 
+### MCP server (May 2026)
+- **Standalone MCP server** under `mcp_server/` exposing DispatchIQ's ops tools to any MCP-compatible client (Claude Code, Claude Desktop, Cursor, etc.) via the FastMCP SDK and stdio transport. First tool ported: `flag_missing_item`. Remaining tools on the porting roadmap.
+
 ### Deployment & polish (April 2026)
-- **Render + Vercel deployment config**: Added `Procfile`, `render.yaml`, and `frontend/.env.example` so the app can deploy to Render (backend) and Vercel (frontend) with minimal setup.
-- **Env-driven API URL**: Frontend reads `VITE_API_URL` (build-time) with a local fallback to `http://localhost:8000`.
-- **Env-driven CORS**: Backend honors `DISPATCHIQ_CORS_ORIGINS` (comma-separated) for production origins; localhost stays allowed by default.
-- **Dashboard layout fix**: Picking progress indicator now sits on its own line in the order row, so it no longer overlaps the `Picking` status badge on narrow viewports.
-- **Public-repo hardening**: Added MIT `LICENSE`, screenshots under `docs/screenshots/`, screenshot capture script, and URL deep links (`?tab=dashboard`, `?tab=cs-queue`, `?tab=shift-summary`).
+- **Render + Vercel deployment config:** Added `Procfile`, `render.yaml`, and `frontend/.env.example` so the app can deploy to Render (backend) and Vercel (frontend) with minimal setup.
+- **Env-driven API URL:** Frontend reads `VITE_API_URL` (build-time) with a local fallback to `http://localhost:8000`.
+- **Env-driven CORS:** Backend honors `DISPATCHIQ_CORS_ORIGINS` (comma-separated) for production origins; localhost stays allowed by default.
+- **Dashboard layout fix:** Picking progress indicator now sits on its own line in the order row, so it no longer overlaps the Picking status badge on narrow viewports.
+- **Public-repo hardening:** Added MIT LICENSE, screenshots under `docs/screenshots/`, screenshot capture script, and URL deep links.
 
 ### v2 — Product Iteration (April 2026)
 Changes based on hands-on testing and operational experience:
 
-- **Smart driver reservation**: Agent warns when assigning a driver to a small order would leave no drivers for upcoming large/heavy orders. Prevents the common mistake of burning your only driver on a delivery a biker could handle.
-- **Batched CS notifications**: OOS items accumulate per order and send as one notification when picking is complete — unless it's a core item, which triggers an immediate alert. Customers get one call, not five.
-- **Pick progress visibility**: Delivery windows show items picked vs. total (20/61), and individual orders show progress (2/7). Ops managers can see at a glance whether a window will make it.
-- **Drivers grouped by company**: Reorganized from zone-based to company-based grouping, reflecting how staffing actually works when everyone ships from one warehouse.
-- **Expected vs. present staffing**: Replaced "X out sick" with "Expected: 12 | Present: 11 | Out: 1" for immediate clarity on staffing levels.
-- **Large/heavy order flagging**: Orders requiring a driver (20+ items or heavy goods) are flagged before dispatch so they don't get assigned to a biker.
-- **Shift summary redesign**: Replaced markdown wall with scannable card layout — critical issues at top, progress bars for delivery windows, numbered priorities for next shift.
+- **Smart driver reservation:** Agent warns when assigning a driver to a small order would leave no drivers for upcoming large/heavy orders. Prevents the common mistake of burning your only driver on a delivery a biker could handle.
+- **Batched CS notifications:** OOS items accumulate per order and send as one notification when picking is complete — unless it's a core item, which triggers an immediate alert. Customers get one call, not five.
+- **Pick progress visibility:** Delivery windows show items picked vs. total (20/61), and individual orders show progress (2/7). Ops managers can see at a glance whether a window will make it.
+- **Drivers grouped by company:** Reorganized from zone-based to company-based grouping, reflecting how staffing actually works when everyone ships from one warehouse.
+- **Expected vs. present staffing:** Replaced "X out sick" with "Expected: 12 | Present: 11 | Out: 1" for immediate clarity on staffing levels.
+- **Large/heavy order flagging:** Orders requiring a driver (20+ items or heavy goods) are flagged before dispatch so they don't get assigned to a biker.
+- **Shift summary redesign:** Replaced markdown wall with scannable card layout — critical issues at top, progress bars for delivery windows, numbered priorities for next shift.
 
 ## What's Next
 
+- [ ] Port remaining tools to the MCP server (`check_window_risk`, `check_driver_coverage`, `create_exception`, etc.)
+- [ ] Expose orders and drivers as MCP resources
 - [ ] Historical analytics: track exception patterns over days/weeks
 - [ ] Driver performance tracking
 - [ ] Predictive late risk using historical delivery times
@@ -216,4 +214,4 @@ Built from firsthand experience managing delivery operations at a startup where 
 
 ## License
 
-See [LICENSE](LICENSE) (MIT).
+See [LICENSE](./LICENSE) (MIT).
