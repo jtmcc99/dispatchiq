@@ -155,9 +155,9 @@ Back in Render, update `DISPATCHIQ_CORS_ORIGINS` to the live Vercel URL (comma-s
 
 ## MCP Server
 
-DispatchIQ also ships a standalone [Model Context Protocol](https://modelcontextprotocol.io) server in [`mcp_server/`](mcp_server/) that exposes the full operations toolkit to any MCP-compatible client — Claude Code, Cursor, Claude Desktop, or a custom agent. Tool calls hit the same JSON-backed data store the live demo uses. See [`mcp_server/README.md`](mcp_server/README.md) for setup.
+DispatchIQ ships a standalone [Model Context Protocol](https://modelcontextprotocol.io) server at [`mcp_server/server.py`](mcp_server/server.py) that exposes the agent's full operations toolkit over the MCP **stdio** transport. Any MCP-compatible client — Claude Code, Cursor, Claude Desktop, or a custom agent — can spawn `python mcp_server/server.py` and drive the same data layer the FastAPI backend uses, with the same business rules and the same Pydantic response shapes. See [`mcp_server/README.md`](mcp_server/README.md) for client setup.
 
-### Tools
+### Tools exposed
 
 | Name | Purpose |
 |------|---------|
