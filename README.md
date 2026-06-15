@@ -204,7 +204,7 @@ Changes based on hands-on testing and operational experience:
 - [ ] Expose orders and drivers as MCP resources
 - [ ] Historical analytics: track exception patterns over days/weeks
 - [ ] Driver performance tracking
-- [ ] Predictive late risk using historical delivery times
+- [ ] Predictive late risk using historical delivery times — see the PRD: [`docs/PRD-predictive-late-risk.md`](docs/PRD-predictive-late-risk.md)
 - [ ] SMS/push notifications for real-time driver communication
 - [ ] Multi-location support
 
