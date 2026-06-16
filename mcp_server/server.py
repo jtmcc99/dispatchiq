@@ -33,7 +33,13 @@ from _models import (
 )
 from _records import build_cs_notification, build_shift_summary, create_exception_record
 
-from late_risk_shadow import score_order_by_id
+# NOTE: `late_risk_shadow` is deliberately NOT imported at module load. It
+# pulls in scikit-learn + joblib (not declared in mcp_server/pyproject.toml)
+# and tries to load a trained model file. Both are optional, shadow-mode-only
+# concerns; the seven operational tools above must not be blocked by them.
+# The import is deferred into `predict_late_risk_shadow` and wrapped so an
+# absent dep or missing model file returns a legible structured error
+# instead of crashing the server or raising a raw ImportError to the client.
 
 
 mcp = FastMCP("dispatchiq")
@@ -371,8 +377,59 @@ def predict_late_risk_shadow(order_id: str) -> dict | NotFound:
     threshold 0.5), `features_resolved`, `context_caveats`, plus a
     `shadow_mode: true` marker. On unknown order_id returns a NotFound
     result rather than raising.
+
+    If the shadow-model dependencies (scikit-learn, joblib) or the trained
+    model artifact are unavailable, returns a structured
+    `{"shadow_unavailable": True, "reason": "...", "remediation": "..."}`
+    dict — the seven operational tools are unaffected.
     """
-    prediction = score_order_by_id(order_id)
+    # Deferred import so the seven operational tools always load, even when
+    # the optional sklearn/joblib deps or the trained model file are absent.
+    try:
+        from late_risk_shadow import score_order_by_id  # noqa: PLC0415
+    except ImportError as exc:
+        return {
+            "shadow_unavailable": True,
+            "reason": (
+                f"late-risk shadow model unavailable: required dependency "
+                f"not installed ({exc.name or exc}). "
+                f"The shadow tool needs scikit-learn and joblib; neither is "
+                f"a default mcp_server dependency."
+            ),
+            "remediation": (
+                "Install the deps into the mcp_server environment "
+                "(`uv add scikit-learn joblib` from mcp_server/) or run the "
+                "MCP server from the backend venv that already has them."
+            ),
+        }
+
+    try:
+        prediction = score_order_by_id(order_id)
+    except FileNotFoundError as exc:
+        return {
+            "shadow_unavailable": True,
+            "reason": (
+                f"late-risk shadow model unavailable: trained model artifact "
+                f"missing ({exc})."
+            ),
+            "remediation": (
+                "Run `python backend/train_late_risk.py` from the repo root "
+                "to generate `data/models/late_risk_logreg_v1.joblib`."
+            ),
+        }
+    except RuntimeError as exc:
+        return {
+            "shadow_unavailable": True,
+            "reason": (
+                f"late-risk shadow model unavailable: model artifact "
+                f"incompatible with current code ({exc})."
+            ),
+            "remediation": (
+                "Retrain via `python backend/train_late_risk.py` to "
+                "regenerate the artifact against the current feature schema."
+            ),
+        }
+
     if prediction is None:
         return NotFound(
             entity="order",
