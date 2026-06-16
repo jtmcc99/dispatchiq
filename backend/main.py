@@ -344,3 +344,28 @@ def get_stats():
 @app.get("/health")
 def health():
     return {"status": "ok", "time": datetime.now().isoformat()}
+
+
+# ─── Late-risk shadow mode ────────────────────────────────────────────────────
+#
+# Predictions compute and log here but are deliberately NOT joined to the
+# operational flag/exception flow. See docs/late-risk-eval-and-limitations.md
+# for the rationale (synthetic-eval circularity, no real outcome data yet) and
+# graduation criteria for leaving shadow mode.
+
+@app.get("/late-risk/shadow-predictions")
+def late_risk_shadow_predictions():
+    try:
+        from late_risk_shadow import score_active_orders
+    except FileNotFoundError as e:
+        raise HTTPException(503, str(e))
+    predictions = score_active_orders()
+    return {
+        "shadow_mode": True,
+        "warning": (
+            "These predictions are not user-facing flags. See "
+            "docs/late-risk-eval-and-limitations.md before acting on them."
+        ),
+        "count": len(predictions),
+        "predictions": [p.to_dict() for p in predictions],
+    }

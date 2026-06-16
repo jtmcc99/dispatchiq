@@ -33,6 +33,8 @@ from _models import (
 )
 from _records import build_cs_notification, build_shift_summary, create_exception_record
 
+from late_risk_shadow import score_order_by_id
+
 
 mcp = FastMCP("dispatchiq")
 
@@ -341,6 +343,43 @@ def generate_shift_summary(shift_id: str | None = None) -> ShiftSummary | NotFou
       work if historical analytics is needed.
     """
     return build_shift_summary(shift_id)
+
+
+@mcp.tool()
+def predict_late_risk_shadow(order_id: str) -> dict | NotFound:
+    """⚠️ SHADOW MODE — do not surface to end users or auto-act on the result.
+
+    Returns the late-risk model's prediction for one order, plus the resolved
+    feature inputs and the approximations applied when building them from
+    live state. This tool exists so operators and analysts can inspect what
+    the model would say. It is intentionally NOT wired into the dashboard,
+    the agent's exception-creation path, or any user-facing flag.
+
+    Why shadow only: the model was trained on synthetic data whose labels
+    were derived from the same features the model sees, so the holdout eval
+    is methodologically circular and cannot establish real-world predictive
+    validity. See `docs/late-risk-eval-and-limitations.md` for the full
+    rationale and the criteria for leaving shadow mode.
+
+    The prediction is also appended to `backend/data/shadow_predictions.jsonl`
+    so the log can be replayed against real outcomes later.
+
+    Args:
+        order_id: The order to score.
+
+    Returns a dict with: `p_late` (probability), `would_flag` (boolean at
+    threshold 0.5), `features_resolved`, `context_caveats`, plus a
+    `shadow_mode: true` marker. On unknown order_id returns a NotFound
+    result rather than raising.
+    """
+    prediction = score_order_by_id(order_id)
+    if prediction is None:
+        return NotFound(
+            entity="order",
+            id=order_id,
+            message=f"Order {order_id} not found.",
+        )
+    return prediction.to_dict()
 
 
 if __name__ == "__main__":

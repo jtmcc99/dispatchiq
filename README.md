@@ -168,6 +168,7 @@ DispatchIQ ships a standalone [Model Context Protocol](https://modelcontextproto
 | `create_exception` | Record a tracked operational exception. Dedupes by order + spec-level type so distinct issue categories don't collapse. |
 | `generate_cs_notification` | Generate a draft customer-facing script and persist a CS notification (immediate or batched per DispatchIQ policy). |
 | `generate_shift_summary` | Structured end-of-shift briefing: window progress, open exceptions, unresolved CS items, and top priorities for the next shift. |
+| `predict_late_risk_shadow` | **Shadow mode — not a user-facing flag.** Returns the late-risk model's probability and the resolved features for one order. Trained on synthetic data; see [`docs/late-risk-eval-and-limitations.md`](docs/late-risk-eval-and-limitations.md) before acting on the result. |
 
 All tools return Pydantic-typed responses and use a structured `NotFound` result (`kind="not_found"`) for unknown order, driver, zone, or shift ids rather than raising.
 
@@ -204,7 +205,7 @@ Changes based on hands-on testing and operational experience:
 - [ ] Expose orders and drivers as MCP resources
 - [ ] Historical analytics: track exception patterns over days/weeks
 - [ ] Driver performance tracking
-- [ ] Predictive late risk using historical delivery times — see the PRD: [`docs/PRD-predictive-late-risk.md`](docs/PRD-predictive-late-risk.md)
+- [x] Predictive late risk (shadow mode only) — model trained on synthetic data, predictions compute and log but do not surface as user-facing flags. See the [PRD](docs/PRD-predictive-late-risk.md) and the [eval + limitations writeup](docs/late-risk-eval-and-limitations.md) for why this stays in shadow until real outcome data exists.
 - [ ] SMS/push notifications for real-time driver communication
 - [ ] Multi-location support
 

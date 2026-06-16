@@ -23,3 +23,7 @@ frontend/.env
 
 # Local data backups (rollback artifacts, not source of truth)
 *.backup.json
+
+# Shadow-mode prediction log — runtime state, regenerated on each request.
+# See docs/late-risk-eval-and-limitations.md for the role this log plays.
+backend/data/shadow_predictions.jsonl
