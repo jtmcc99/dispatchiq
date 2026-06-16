@@ -4,3 +4,5 @@ anthropic==0.40.0
 pydantic==2.10.3
 python-multipart==0.0.19
 httpx==0.28.1
+scikit-learn==1.6.0
+joblib==1.4.2

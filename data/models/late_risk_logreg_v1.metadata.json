@@ -1,0 +1,39 @@
+{
+  "generated_at": "2026-06-16T19:15:06+00:00",
+  "dataset": "data/synthetic_order_history.json",
+  "split": {
+    "train_size": 400,
+    "train_late_count": 78,
+    "train_late_rate": 0.195,
+    "holdout_size": 100,
+    "holdout_late_count": 20,
+    "holdout_late_rate": 0.2,
+    "split_seed": 42,
+    "holdout_fraction": 0.2
+  },
+  "model": {
+    "type": "LogisticRegression",
+    "threshold": 0.5,
+    "precision": 0.0,
+    "recall": 0.0,
+    "confusion": {
+      "tp": 0,
+      "fp": 1,
+      "fn": 20,
+      "tn": 79
+    }
+  },
+  "rule_based_baseline": {
+    "source": "backend/late_risk_baseline.py:rule_based_late_flag",
+    "precision": 0.1538,
+    "recall": 0.1,
+    "confusion": {
+      "tp": 2,
+      "fp": 11,
+      "fn": 18,
+      "tn": 69
+    }
+  },
+  "lead_time_note": "PRD \u00a79 also calls for measuring lead time vs. the rule-based flag. On this synthetic dispatch-snapshot dataset both predictors operate on the same moment in time, so lead time cannot be measured here. It is a real eval dimension once the model is wired into the live pre-dispatch path.",
+  "feature_count": 20
+}
