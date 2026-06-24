@@ -21,6 +21,11 @@ from risk import _parse_window, compute_risk_level  # re-export for callers
 
 client = anthropic.Anthropic()
 MODEL = "claude-sonnet-4-5"
+# Per-iteration token cap. 4096 was hitting truncation mid-tool_use on big
+# shifts (Claude generates long `description` / `agent_recommendation` strings
+# for create_exception). The Anthropic SDK then JSON-decode-fails on the
+# truncated tool_use.input and the cycle 500s.
+MAX_TOKENS = 16384
 
 
 # ─── Tool implementations ─────────────────────────────────────────────────────
@@ -426,12 +431,22 @@ def run_agent_cycle() -> dict:
     max_iterations = 20
 
     for _ in range(max_iterations):
-        response = client.messages.create(
-            model=MODEL,
-            max_tokens=4096,
-            tools=TOOLS,
-            messages=messages,
-        )
+        try:
+            response = client.messages.create(
+                model=MODEL,
+                max_tokens=MAX_TOKENS,
+                tools=TOOLS,
+                messages=messages,
+            )
+        except json.JSONDecodeError:
+            # Anthropic SDK couldn't parse Claude's response — typically a
+            # truncated tool_use.input from hitting max_tokens. Stop here and
+            # return what we already have rather than failing the whole run.
+            final_text = final_text or (
+                "Agent stopped early: a tool call response could not be "
+                "parsed (likely max_tokens truncation). Re-run if needed."
+            )
+            break
 
         tool_uses = [b for b in response.content if b.type == "tool_use"]
         text_blocks = [b for b in response.content if b.type == "text"]
@@ -479,10 +494,10 @@ Current shift data:
 {json.dumps(stats, indent=2)}
 
 Open exceptions ({len(open_exc)}):
-{json.dumps([{{'type': e.type, 'severity': e.severity, 'description': e.description}} for e in open_exc], indent=2)}
+{json.dumps([{'type': e.type, 'severity': e.severity, 'description': e.description} for e in open_exc], indent=2)}
 
 Pending CS notifications ({len(pending_notifs)}):
-{json.dumps([{{'order_id': n.order_id, 'issue': n.issue_type}} for n in pending_notifs], indent=2)}
+{json.dumps([{'order_id': n.order_id, 'issue': n.issue_type} for n in pending_notifs], indent=2)}
 
 Return ONLY valid JSON with this exact structure:
 {{
