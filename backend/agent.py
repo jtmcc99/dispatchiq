@@ -8,6 +8,7 @@ and generate CS notifications. It runs in a background loop.
 """
 
 import json
+import os
 import uuid
 import asyncio
 from datetime import datetime
@@ -20,7 +21,14 @@ from models import Exception_, CSNotification, Order
 from risk import _parse_window, compute_risk_level  # re-export for callers
 
 client = anthropic.Anthropic()
-MODEL = "claude-sonnet-4-5"
+
+# Configurable via DISPATCHIQ_ANTHROPIC_MODEL — lets the deployed backend swap
+# models (e.g., when Anthropic deprecates a snapshot) without a code change +
+# redeploy cycle. The default is the current Sonnet 4.5 alias, which auto-
+# tracks the latest stable release.
+DEFAULT_MODEL = "claude-sonnet-4-5"
+MODEL = os.getenv("DISPATCHIQ_ANTHROPIC_MODEL", DEFAULT_MODEL)
+
 # Per-iteration token cap. 4096 was hitting truncation mid-tool_use on big
 # shifts (Claude generates long `description` / `agent_recommendation` strings
 # for create_exception). The Anthropic SDK then JSON-decode-fails on the

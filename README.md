@@ -107,6 +107,7 @@ Never commit API keys. This repo ignores `.env` files; keep secrets in environme
 | Variable | Where | Purpose |
 |----------|-------|---------|
 | `ANTHROPIC_API_KEY` | Backend | Required for agent features (Run Agent, shift summary). Not needed to browse the dashboard with demo data. |
+| `DISPATCHIQ_ANTHROPIC_MODEL` | Backend | Anthropic model identifier the agent calls. Defaults to `claude-sonnet-4-5` (current alias). Override to use a different model or a dated snapshot. |
 | `DISPATCHIQ_CORS_ORIGINS` | Backend | Comma-separated list of allowed browser origins. Defaults to `http://localhost:5173, http://localhost:3000` when unset. Set to your Vercel URL in production. |
 | `VITE_API_URL` | Frontend (build-time) | Base URL of the backend, e.g. `https://your-service.onrender.com`. Falls back to `http://localhost:8000` if unset. See `frontend/.env.example`. |
 
