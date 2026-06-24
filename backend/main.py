@@ -4,7 +4,7 @@ import asyncio
 import os
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException
@@ -109,7 +109,7 @@ def _batch_pending_cs_notifications(order_id: str):
         ),
         status="pending",
         notification_subtype="batched",
-        created_at=datetime.now().isoformat(),
+        created_at=datetime.now(timezone.utc).isoformat(),
     )
     data_store.create_cs_notification(batched)
 
@@ -150,7 +150,7 @@ def get_order(order_id: str):
 
 @app.patch("/orders/{order_id}")
 def update_order(order_id: str, update: OrderStatusUpdate):
-    now_iso = datetime.now().isoformat()
+    now_iso = datetime.now(timezone.utc).isoformat()
     updates: dict = {"status": update.status}
 
     ts_map = {
@@ -213,7 +213,7 @@ def list_exceptions(status: Optional[str] = None):
 def update_exception(exc_id: str, update: ExceptionUpdate):
     updates: dict = {"status": update.status}
     if update.status == "resolved":
-        updates["resolved_at"] = datetime.now().isoformat()
+        updates["resolved_at"] = datetime.now(timezone.utc).isoformat()
     exc = data_store.update_exception(exc_id, updates)
     if not exc:
         raise HTTPException(404, f"Exception {exc_id} not found")
@@ -237,7 +237,7 @@ def list_cs_notifications(status: Optional[str] = None):
 def update_cs_notification(notif_id: str, update: CSNotificationUpdate):
     updates: dict = {"status": update.status}
     if update.status == "handled":
-        updates["handled_at"] = datetime.now().isoformat()
+        updates["handled_at"] = datetime.now(timezone.utc).isoformat()
     notif = data_store.update_cs_notification(notif_id, updates)
     if not notif:
         raise HTTPException(404, f"Notification {notif_id} not found")
@@ -275,7 +275,7 @@ async def shift_summary():
         structured = await generate_shift_summary_structured()
         return {
             "structured": structured,
-            "generated_at": datetime.now().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
         }
     except Exception as e:
         raise HTTPException(500, f"Summary error: {str(e)}")
@@ -343,7 +343,7 @@ def get_stats():
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "time": datetime.now().isoformat()}
+    return {"status": "ok", "time": datetime.now(timezone.utc).isoformat()}
 
 
 # ─── Late-risk shadow mode ────────────────────────────────────────────────────

@@ -1,16 +1,10 @@
 import { CheckCircle, Bell, Clock, User, Zap, Package } from 'lucide-react'
 import type { CSNotification } from '../types'
+import { timeAgo } from '../utils/time'
 
 interface Props {
   notifications: CSNotification[]
   onMarkHandled: (id: string) => void
-}
-
-function timeAgo(iso: string): string {
-  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
-  if (diff < 60) return `${diff}s ago`
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
-  return `${Math.floor(diff / 3600)}h ago`
 }
 
 const ISSUE_COLOR: Record<string, string> = {

@@ -1,6 +1,7 @@
 import { CheckCircle, Bot, Clock, ChevronDown, ChevronUp } from 'lucide-react'
 import { useState } from 'react'
 import type { Exception, AgentStatus } from '../types'
+import { timeAgo } from '../utils/time'
 
 interface Props {
   exceptions: Exception[]
@@ -27,13 +28,6 @@ const SEV_DOT: Record<string, string> = {
   high: 'bg-red-500',
   medium: 'bg-amber-400',
   low: 'bg-slate-400',
-}
-
-function timeAgo(iso: string): string {
-  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
-  if (diff < 60) return `${diff}s ago`
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
-  return `${Math.floor(diff / 3600)}h ago`
 }
 
 export function ExceptionFeed({ exceptions, onResolve, agentRunning, agentStatus }: Props) {

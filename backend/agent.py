@@ -10,7 +10,7 @@ and generate CS notifications. It runs in a background loop.
 import json
 import uuid
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 import anthropic
@@ -202,7 +202,7 @@ def tool_create_exception(
         agent_recommendation=agent_recommendation,
         status="open",
         cs_notified=False,
-        created_at=datetime.now().isoformat(),
+        created_at=datetime.now(timezone.utc).isoformat(),
     )
     result = data_store.create_exception(exc)
     return {"exception_id": result.id, "created": result.id == exc.id, "duplicate": result.id != exc.id}
@@ -232,7 +232,7 @@ def tool_generate_cs_notification(
         customer_message=customer_message,
         status=status,
         notification_subtype=subtype,
-        created_at=datetime.now().isoformat(),
+        created_at=datetime.now(timezone.utc).isoformat(),
     )
     result = data_store.create_cs_notification(notif)
     return {
@@ -475,7 +475,7 @@ def run_agent_cycle() -> dict:
         "exceptions_detected": exceptions_after - exceptions_before,
         "notifications_created": notifications_after - notifications_before,
         "summary": final_text or "Agent cycle completed.",
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -559,7 +559,7 @@ class AgentMonitor:
                 self.last_result = {
                     "status": "error",
                     "error": str(e),
-                    "timestamp": datetime.now().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
             await asyncio.sleep(self.interval)
 
