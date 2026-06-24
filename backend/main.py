@@ -2,26 +2,68 @@ from __future__ import annotations
 
 import asyncio
 import os
+import sys
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Optional
 
+import anthropic
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 import data_store
 from models import CSNotification
-from agent import AgentMonitor, run_agent_cycle, generate_shift_summary_structured, compute_risk_level
+from agent import (
+    MODEL,
+    AgentMonitor,
+    compute_risk_level,
+    generate_shift_summary_structured,
+    run_agent_cycle,
+)
 
 # ─── App lifecycle ─────────────────────────────────────────────────────────────
 
 agent_monitor = AgentMonitor(interval_seconds=60)
 
 
+async def _verify_anthropic_model() -> None:
+    """One-time startup probe: log a clear warning if the configured Anthropic
+    model identifier isn't recognized by Anthropic's API.
+
+    Cheap (`models.retrieve` is a metadata-only call, no token spend) and
+    non-blocking on failure — we want next-deprecation surfaces in logs
+    before a user clicks Run Agent mid-demo, not a startup crash.
+    """
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        return  # nothing to verify against
+    client = anthropic.Anthropic()
+    loop = asyncio.get_event_loop()
+    try:
+        await loop.run_in_executor(None, lambda: client.models.retrieve(MODEL))
+        print(
+            f"[startup] Anthropic model verified: {MODEL}",
+            file=sys.stderr,
+        )
+    except anthropic.NotFoundError:
+        print(
+            f"[startup] WARNING: Anthropic model {MODEL!r} returns 404. "
+            f"Run Agent and Shift Summary will fail until this is fixed. "
+            f"Override with DISPATCHIQ_ANTHROPIC_MODEL.",
+            file=sys.stderr,
+        )
+    except Exception as exc:
+        print(
+            f"[startup] Could not verify Anthropic model {MODEL!r}: "
+            f"{type(exc).__name__}: {exc}",
+            file=sys.stderr,
+        )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await _verify_anthropic_model()
     task = asyncio.create_task(agent_monitor.run_loop())
     yield
     task.cancel()
