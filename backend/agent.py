@@ -20,7 +20,7 @@ from models import Exception_, CSNotification, Order
 from risk import _parse_window, compute_risk_level  # re-export for callers
 
 client = anthropic.Anthropic()
-MODEL = "claude-sonnet-4-20250514"
+MODEL = "claude-sonnet-4-5"
 
 
 # ─── Tool implementations ─────────────────────────────────────────────────────
