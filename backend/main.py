@@ -2,26 +2,68 @@ from __future__ import annotations
 
 import asyncio
 import os
+import sys
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException
+import anthropic
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 import data_store
 from models import CSNotification
-from agent import AgentMonitor, run_agent_cycle, generate_shift_summary_structured, compute_risk_level
+from agent import (
+    MODEL,
+    AgentMonitor,
+    compute_risk_level,
+    generate_shift_summary_structured,
+    run_agent_cycle,
+)
 
 # ─── App lifecycle ─────────────────────────────────────────────────────────────
 
 agent_monitor = AgentMonitor(interval_seconds=60)
 
 
+async def _verify_anthropic_model() -> None:
+    """One-time startup probe: log a clear warning if the configured Anthropic
+    model identifier isn't recognized by Anthropic's API.
+
+    Cheap (`models.retrieve` is a metadata-only call, no token spend) and
+    non-blocking on failure — we want next-deprecation surfaces in logs
+    before a user clicks Run Agent mid-demo, not a startup crash.
+    """
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        return  # nothing to verify against
+    client = anthropic.Anthropic()
+    loop = asyncio.get_event_loop()
+    try:
+        await loop.run_in_executor(None, lambda: client.models.retrieve(MODEL))
+        print(
+            f"[startup] Anthropic model verified: {MODEL}",
+            file=sys.stderr,
+        )
+    except anthropic.NotFoundError:
+        print(
+            f"[startup] WARNING: Anthropic model {MODEL!r} returns 404. "
+            f"Run Agent and Shift Summary will fail until this is fixed. "
+            f"Override with DISPATCHIQ_ANTHROPIC_MODEL.",
+            file=sys.stderr,
+        )
+    except Exception as exc:
+        print(
+            f"[startup] Could not verify Anthropic model {MODEL!r}: "
+            f"{type(exc).__name__}: {exc}",
+            file=sys.stderr,
+        )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await _verify_anthropic_model()
     task = asyncio.create_task(agent_monitor.run_loop())
     yield
     task.cancel()
@@ -344,6 +386,37 @@ def get_stats():
 @app.get("/health")
 def health():
     return {"status": "ok", "time": datetime.now().isoformat()}
+
+
+# ─── Admin ────────────────────────────────────────────────────────────────────
+#
+# Reset endpoint for clearing accumulated agent state mid-demo without a
+# redeploy. Gated by X-Admin-Token matching the DISPATCHIQ_ADMIN_TOKEN env
+# var. If the env var isn't set, the endpoint returns 503 — secure-by-default,
+# matching the gating pattern already used for ANTHROPIC_API_KEY-dependent
+# routes elsewhere in this file.
+
+@app.post("/admin/reset-agent-state")
+def reset_agent_state(x_admin_token: Optional[str] = Header(default=None)):
+    expected = os.getenv("DISPATCHIQ_ADMIN_TOKEN")
+    if not expected:
+        raise HTTPException(
+            503,
+            "Reset endpoint disabled: set DISPATCHIQ_ADMIN_TOKEN to enable.",
+        )
+    if not x_admin_token or x_admin_token != expected:
+        raise HTTPException(401, "Invalid or missing X-Admin-Token header.")
+
+    cleared_exceptions = len(data_store.get_exceptions())
+    cleared_notifications = len(data_store.get_cs_notifications())
+    data_store.save_exceptions([])
+    data_store.save_cs_notifications([])
+    return {
+        "status": "reset",
+        "cleared_exceptions": cleared_exceptions,
+        "cleared_cs_notifications": cleared_notifications,
+        "reset_at": datetime.now().isoformat(),
+    }
 
 
 # ─── Late-risk shadow mode ────────────────────────────────────────────────────
